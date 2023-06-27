@@ -82,7 +82,7 @@ RUN mkdir -p ~/.ssh \
     && chmod 600 ~/.ssh/authorized_keys \
     && tee -a ~/.ssh/config <<< 'Host *' \
     && tee -a ~/.ssh/config <<< '    StrictHostKeyChecking no' \
-    && tee -a ~/.ssh/config <<< '    UserKnownHostsFile=/dev/null'
+    && tee -a ~/.ssh/config <<< '    UserKnownHostsFile=~/.ssh/known_hosts'
 
 RUN touch Auto.sh \
     && chmod +x ./Auto.sh \
@@ -95,8 +95,9 @@ RUN touch Auto.sh \
     && tee -a Auto.sh <<< '  chmod 600 "${SSH_KEY}"' \
     && tee -a Auto.sh <<< '}' \
     && tee -a Auto.sh <<< '/bin/bash -c ./Launch.sh & echo "Booting Docker-OSX in the background. Please wait..."' \
+    && tee -a Auto.sh <<< 'sudo -- sh -c "echo  \ \ >> /etc/hosts"; sudo -- sh -c "echo 127.0.0.1  macos-host >> /etc/hosts"' \
     && tee -a Auto.sh <<< 'for i in {1..20}; do' \
-    && tee -a Auto.sh <<< '  sshpass -p${PASSWORD:=Jenkins} ssh-copy-id -f -i "${SSH_KEY}.pub" -p 10022 ${USERNAME:=jenkins}@127.0.0.1 > /dev/null' \
+    && tee -a Auto.sh <<< '  sshpass -p${PASSWORD:=Jenkins} ssh-copy-id -f -i "${SSH_KEY}.pub" -p 10022 ${USERNAME:=jenkins}@macos-host > /dev/null' \
     && tee -a Auto.sh <<< '  if [[ "$?" == "0" ]]; then' \
     && tee -a Auto.sh <<< '    break' \
     && tee -a Auto.sh <<< '  else' \
@@ -114,7 +115,7 @@ RUN touch Auto.sh \
     && tee -a Auto.sh <<< '  fi' \
     && tee -a Auto.sh <<< 'done' \
     && tee -a Auto.sh <<< 'grep ${SSH_KEY} ~/.ssh/config || {' \
-    && tee -a Auto.sh <<< '  tee -a ~/.ssh/config <<< "Host 127.0.0.1"' \
+    && tee -a Auto.sh <<< '  tee -a ~/.ssh/config <<< "Host macos-host"' \
     && tee -a Auto.sh <<< '  tee -a ~/.ssh/config <<< "    User ${USERNAME:=jenkins}"' \
     && tee -a Auto.sh <<< '  tee -a ~/.ssh/config <<< "    Port 10022"' \
     && tee -a Auto.sh <<< '  tee -a ~/.ssh/config <<< "    IdentityFile ${SSH_KEY}"' \
@@ -122,7 +123,7 @@ RUN touch Auto.sh \
     && tee -a Auto.sh <<< '  tee -a ~/.ssh/config <<< "    UserKnownHostsFile=~/.ssh/known_hosts"' \
     && tee -a Auto.sh <<< '}' \
     && tee -a Auto.sh <<< 'echo "Execute on macos: ${OSX_COMMANDS}"' \
-    && tee -a Auto.sh <<< 'ssh 127.0.0.1 "${OSX_COMMANDS}"'
+    && tee -a Auto.sh <<< 'ssh macos-host "${OSX_COMMANDS}"'
 
 RUN touch Start.sh \
     && chmod +x ./Start.sh \
